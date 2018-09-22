@@ -24,6 +24,12 @@ class SquareToCircle(Scene):
         self.play(FadeOut(square))
 
 
+class SVGTest(Scene):
+    def construct(self):
+        mail = SVGMobject(file_name="files/svg/mail.svg")
+        self.play(ShowCreation(mail))
+
+
 class WarpSquare(Scene):
     def construct(self):
         square = Square()
@@ -52,7 +58,7 @@ class WriteStuff(Scene):
         self.wait()
 
 
-class UdatersExample(Scene):
+class UpdatersExample(Scene):
     def construct(self):
         decimal = DecimalNumber(
             0,
@@ -71,5 +77,20 @@ class UdatersExample(Scene):
             run_time=5,
         )
         self.wait()
+
+
+class SoundExample(Scene):
+    def construct(self):
+        text1 = TextMobject("sound1").shift(UP)
+        text2 = TextMobject("sound2")
+        text3 = TextMobject("sound3").shift(DOWN)
+
+        self.wait(1)
+        self.play(ShowCreation(text1), audio="sound1.ogg")
+        self.wait(1)
+        self.play(ShowCreation(text2), audio="sound2.ogg")
+        self.wait(1)
+        self.play(ShowCreation(text3), audio="sound3.ogg")
+        self.wait(1)
 
 # See old_projects folder for many, many more

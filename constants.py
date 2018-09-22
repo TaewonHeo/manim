@@ -335,6 +335,7 @@ TEX_IMAGE_DIR = TEX_DIR  # TODO, What is this doing?
 # These two may be depricated now.
 MOBJECT_DIR = os.path.join(FILE_DIR, "mobjects")
 IMAGE_MOBJECT_DIR = os.path.join(MOBJECT_DIR, "image")
+AUDIO_DIR = os.path.join(FILE_DIR, "audio")
 
 for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, ANIMATIONS_DIR, TEX_DIR,
                TEX_IMAGE_DIR, MOBJECT_DIR, IMAGE_MOBJECT_DIR,
@@ -345,8 +346,13 @@ for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, ANIMATIONS_DIR, TEX_DI
 TEX_USE_CTEX = False
 TEX_FIX_SVG = False
 TEX_TEXT_TO_REPLACE = "YourTextHere"
-TEMPLATE_TEX_FILE = os.path.join(THIS_DIR, "tex_template.tex" if not TEX_USE_CTEX
-    else "ctex_template.tex")
+if TEX_USE_CTEX:
+    TEMPLATE_TEX_FILE     = os.path.join(LIB_DIR, "ctex_template.tex")
+else:
+    TEMPLATE_TEX_FILE     = os.path.join(LIB_DIR, "template.tex")
+TEMPLATE_TEXT_FILE    = os.path.join(LIB_DIR, "text_template.tex")
+TEMPLATE_CODE_FILE    = os.path.join(LIB_DIR, "code_template.tex")
+TEMPLATE_ALIGNAT_FILE = os.path.join(LIB_DIR, "alignat_template.tex")
 with open(TEMPLATE_TEX_FILE, "r") as infile:
     TEMPLATE_TEXT_FILE_BODY = infile.read()
     TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(

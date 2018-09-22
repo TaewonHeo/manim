@@ -57,6 +57,8 @@ class Scene(Container):
         self.shared_locals = {}
         self.frame_num = 0
         self.current_scene_time = 0
+        self.total_run_time = 0
+        self.audio_list = []
         self.original_skipping_status = self.skip_animations
         if self.name is None:
             self.name = self.__class__.__name__
@@ -80,6 +82,9 @@ class Scene(Container):
         if self.write_to_movie:
             self.close_movie_pipe()
         print("Played a total of %d animations" % self.num_plays)
+
+        if self.write_to_movie:
+            self.multiplex_sound()
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -486,19 +491,20 @@ class Scene(Container):
             if animation.mobject not in self.get_mobject_family_members():
                 self.add(animation.mobject)
         moving_mobjects = self.get_moving_mobjects(*animations)
+        self.save_sound(self.total_run_time, kwargs.get("audio", None))
 
         # Paint all non-moving objects onto the screen, so they don't
         # have to be rendered every frame
         self.update_frame(excluded_mobjects=moving_mobjects)
         static_image = self.get_frame()
-        total_run_time = 0
         for t in self.get_animation_time_progression(animations):
             for animation in animations:
                 animation.update(t / animation.run_time)
             self.continual_update(self.frame_duration, animations=animations)
             self.update_frame(moving_mobjects, static_image)
             self.add_frames(self.get_frame())
-            total_run_time = t
+        self.total_run_time += np.max(
+            [animation.run_time for animation in animations])
         self.mobjects_from_last_animation = [
             anim.mobject for anim in animations
         ]
@@ -522,12 +528,11 @@ class Scene(Container):
 
     def wait(self, duration=DEFAULT_WAIT_TIME):
         if self.should_continually_update():
-            total_time = 0
             for t in self.get_time_progression(duration):
                 self.continual_update(self.frame_duration)
                 self.update_frame()
                 self.add_frames(self.get_frame())
-                total_time = t
+            self.total_run_time += duration
         elif self.skip_animations:
             # Do nothing
             return self
@@ -536,6 +541,7 @@ class Scene(Container):
             n_frames = int(duration / self.frame_duration)
             frame = self.get_frame()
             self.add_frames(*[frame] * n_frames)
+            self.total_run_time += duration
         return self
 
     def wait_to(self, time, assert_positive=True):
@@ -651,6 +657,59 @@ class Scene(Container):
     def close_movie_pipe(self):
         self.writing_process.stdin.close()
         self.writing_process.wait()
+        if os.name == 'nt':
+            shutil.move(*self.args_to_rename_file)
+        else:
+            os.rename(*self.args_to_rename_file)
+
+    def save_sound(self, time, audio_file):
+        if not audio_file:
+            return
+        self.audio_list.append((time, audio_file))
+
+    def get_num_channels(self, audio_file):
+        return int(sp.check_output([
+            "ffprobe",
+            "-i", audio_file,
+            "-show_entries", "stream=channels",
+            "-select_streams", "a:0",
+            "-of", "compact=p=0:nk=1",
+            "-v", "0",
+        ]))
+
+    def multiplex_sound(self):
+        command = [
+            FFMPEG_BIN,
+            '-y',  # overwrite file if it exists
+        ]
+        # add input files
+        for delay, audio_file in self.audio_list:
+            command.extend(['-i', os.path.join(AUDIO_DIR, audio_file)])
+        command.extend(['-i', self.args_to_rename_file[1]])
+        command.append('-filter_complex')
+        filter_arg = ""
+        # adelay
+        for i, (delay, audio_file) in enumerate(self.audio_list):
+            num_channels = \
+                self.get_num_channels(os.path.join(AUDIO_DIR, audio_file))
+            millisecond_delay = int(1000 * delay)
+            filter_arg += f"[{i}]adelay={millisecond_delay}"
+            for _ in range(num_channels - 1):
+                filter_arg += f"|{millisecond_delay}"
+            filter_arg += f"[{audio_file}];"
+        # amix
+        for delay, audio_file in self.audio_list:
+            filter_arg += f"[{audio_file}]"
+        filter_arg += f"amix=inputs={len(self.audio_list)}[mixout]"
+        command.extend([
+            filter_arg,
+            '-acodec', 'mp2',
+            '-vcodec', 'copy',
+            '-map', f'{len(self.audio_list)}:0',
+            '-map', '[mixout]',
+            self.args_to_rename_file[0],
+        ])
+        sp.run(command)
         if os.name == 'nt':
             shutil.move(*self.args_to_rename_file)
         else:
