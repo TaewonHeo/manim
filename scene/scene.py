@@ -83,7 +83,7 @@ class Scene(Container):
             self.close_movie_pipe()
         print("Played a total of %d animations" % self.num_plays)
 
-        if self.write_to_movie:
+        if self.write_to_movie and self.audio_list:
             self.multiplex_sound()
 
     def __getstate__(self):
@@ -668,6 +668,9 @@ class Scene(Container):
         self.audio_list.append((time, audio_file))
 
     def get_num_channels(self, audio_file):
+        """
+        See https://stackoverflow.com/questions/47905083/how-to-check-number-of-channels-in-my-audio-wav-file-using-ffmpeg-command
+        """
         return int(sp.check_output([
             "ffprobe",
             "-i", audio_file,
