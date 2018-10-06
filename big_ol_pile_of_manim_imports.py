@@ -56,6 +56,7 @@ from mobject.three_dimensions import *
 from mobject.types.image_mobject import *
 from mobject.types.point_cloud_mobject import *
 from mobject.types.vectorized_mobject import *
+from mobject.updater import *
 from mobject.value_tracker import *
 
 
