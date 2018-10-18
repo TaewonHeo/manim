@@ -33,7 +33,7 @@ class Mobject(Container):
     Objects within Manim.
     """
     CONFIG = {
-        "color": WHITE,
+        "color": BLACK,
         "name": None,
         "dim": 3,
         "target": None,
