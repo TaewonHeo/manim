@@ -261,9 +261,7 @@ class Scene(Container):
         mobjects += self.foreground_mobjects
         for mobject in mobjects:
             if mobject not in self.get_mobject_family_members():
-                self.mobjects += mobject
-        # self.restructure_mobjects(to_remove=mobjects)
-        # self.mobjects += mobjects
+                self.mobjects.append(mobject)
         self.continual_animations += continual_animations
         return self
 
@@ -282,14 +280,12 @@ class Scene(Container):
         )
 
         to_remove = self.camera.extract_mobject_family_members(mobjects)
-        # for list_name in "mobjects", "foreground_mobjects":
-        #     self.restructure_mobjects(mobjects, list_name, True)
 
         # TODO: short-circuit if to_remove is empty
         for mob_list in self.mobjects, self.foreground_mobjects:
             for mob_to_remove in to_remove:
                 if mob_to_remove in mob_list:
-                    mob_list.remove(mob_to_remove) 
+                    mob_list.remove(mob_to_remove)
             to_search = mob_list.copy()
             while to_search:
                 parent = to_search.pop(0)
@@ -525,33 +521,10 @@ class Scene(Container):
             anim.mobject for anim in animations
         ]
         self.clean_up_animations(*animations)
-
-
-
-        # found = False
-        # for mob in self.get_mobject_family_members():
-        #     if hasattr(mob, 'key'):
-        #         if mob.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
-        #             found = True
-        # if found:
-        #     print("we got it 1")
-        # else:
-        #     print("lmao rip 1")
-        #     breakpoint(context=9)
-        # print(len(self.mobjects))
-        # if len(self.mobjects) == 19:
-        #     breakpoint(context=9)
-
-
         if self.skip_animations:
             self.continual_update(0)
         else:
             self.continual_update(self.frame_duration)
-
-
-
-
-
         self.num_plays += 1
         return self
 
@@ -569,11 +542,7 @@ class Scene(Container):
             print("lmao rip")
 
     def clean_up_animations(self, *animations):
-        for i, animation in enumerate(animations):
-            print(i)
-            # if i == 6:
-            #     breakpoint(context=9)
-            self.findit()
+        for animation in animations:
             animation.clean_up(self)
         return self
 

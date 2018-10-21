@@ -67,14 +67,15 @@ class Transform(Animation):
 
     def clean_up(self, surrounding_scene=None):
         Animation.clean_up(self, surrounding_scene)
-        if self.replace_mobject_with_target_in_scene and surrounding_scene is not None:
-            surrounding_scene.remove(self.mobject)
+        if self.replace_mobject_with_target_in_scene \
+                and surrounding_scene is not None:
             if hasattr(self, "parent"):
                 self.parent.remove(self.mobject)
+                if not self.remover:
+                    self.parent.add(self.original_target_mobject)
+            surrounding_scene.remove(self.mobject)
             if not self.remover:
                 surrounding_scene.add(self.original_target_mobject)
-                if hasattr(self, "parent"):
-                    self.parent.add(self.original_target_mobject)
 
 
 class ReplacementTransform(Transform):
