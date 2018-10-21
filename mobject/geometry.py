@@ -183,6 +183,9 @@ class Circle(Arc):
             np.sqrt(mobject.get_width()**2 + mobject.get_height()**2))
         self.scale(buffer_factor)
 
+    def point_at_edge(self, vec):
+        return self.get_center() + vec * self.radius * self.scale_factor
+
 
 class Dot(Circle):
     CONFIG = {

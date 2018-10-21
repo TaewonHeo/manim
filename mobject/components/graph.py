@@ -4,6 +4,7 @@ from mobject.components.node import Node
 from mobject.mobject import Group
 from utils.simple_functions import update_without_overwrite
 import constants
+import numpy as np
 import sys
 
 
@@ -68,7 +69,7 @@ class Graph(Group):
                     animate=animate,
                 ))
                 # update adjacent edges in case radius changes
-                for pair in self.get_adjacent_edges(key, use_direction=False):
+                for pair in self.get_incident_edges(key, use_direction=False):
                     if pair not in dic and pair not in neighbors_to_update:
                         neighbors_to_update.add(pair)
             elif key in self.edges:
@@ -137,7 +138,7 @@ class Graph(Group):
     def get_adjacent_nodes(self, point):
         Node.assert_primitive(point)
         adjacent_nodes = []
-        for edge in self.get_adjacent_edges(point):
+        for edge in self.get_incident_edges(point):
             (u, v) = edge
             if u == point:
                 adjacent_nodes.append(v)
@@ -145,7 +146,7 @@ class Graph(Group):
                 adjacent_nodes.append(u)
         return adjacent_nodes
 
-    def get_adjacent_edges(self, point, use_direction=True):
+    def get_incident_edges(self, point, use_direction=True):
         Node.assert_primitive(point)
         adjacent_edges = []
         for edge in self.edges.keys():
@@ -172,3 +173,21 @@ class Graph(Group):
 
     def get_node_parent_edge(self, point):
         return self.nodes[point].get_parent_edge()
+
+    def add_edge_updaters(self):
+        def follow_endpoint_updater(edge):
+            vec = edge.end_node.mobject.get_center() \
+                - edge.start_node.mobject.get_center()
+            vec = vec / np.linalg.norm(vec)
+            start = edge.start_node.mobject.get_center() \
+                + vec * edge.start_node.mobject.radius \
+                * edge.start_node.scale_factor
+            end = edge.end_node.mobject.get_center() \
+                - vec * edge.end_node.mobject.radius \
+                * edge.end_node.scale_factor
+            # if edge.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
+            #     print(start, end)
+            edge.mobject.put_start_and_end_on(start, end)
+        # add radius change, draw nodes first
+        for edge in self.edges.values():
+            edge.add_updater(follow_endpoint_updater)

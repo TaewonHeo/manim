@@ -188,7 +188,7 @@ class Scene(Container):
     ###
 
     def continual_update(self, dt, animations=None):
-        for mobject in self.get_mobjects():
+        for mobject in self.get_mobject_family_members():
             mobject.update(dt)
         for continual_animation in self.continual_animations:
             continual_animation.update(dt, animations=animations)
@@ -259,8 +259,11 @@ class Scene(Container):
             mobjects_or_continual_animations
         )
         mobjects += self.foreground_mobjects
-        self.restructure_mobjects(to_remove=mobjects)
-        self.mobjects += mobjects
+        for mobject in mobjects:
+            if mobject not in self.get_mobject_family_members():
+                self.mobjects += mobject
+        # self.restructure_mobjects(to_remove=mobjects)
+        # self.mobjects += mobjects
         self.continual_animations += continual_animations
         return self
 
@@ -279,8 +282,21 @@ class Scene(Container):
         )
 
         to_remove = self.camera.extract_mobject_family_members(mobjects)
-        for list_name in "mobjects", "foreground_mobjects":
-            self.restructure_mobjects(mobjects, list_name, True)
+        # for list_name in "mobjects", "foreground_mobjects":
+        #     self.restructure_mobjects(mobjects, list_name, True)
+
+        # TODO: short-circuit if to_remove is empty
+        for mob_list in self.mobjects, self.foreground_mobjects:
+            for mob_to_remove in to_remove:
+                if mob_to_remove in mob_list:
+                    mob_list.remove(mob_to_remove) 
+            to_search = mob_list.copy()
+            while to_search:
+                parent = to_search.pop(0)
+                for mob_to_remove in to_remove:
+                    if mob_to_remove in parent.submobjects:
+                        parent.submobjects.remove(mob_to_remove)
+                to_search.extend(parent.submobjects)
 
         self.continual_animations = [ca for ca in self.continual_animations if ca not in continual_animations and
             ca.mobject not in to_remove]
@@ -509,15 +525,55 @@ class Scene(Container):
             anim.mobject for anim in animations
         ]
         self.clean_up_animations(*animations)
+
+
+
+        # found = False
+        # for mob in self.get_mobject_family_members():
+        #     if hasattr(mob, 'key'):
+        #         if mob.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
+        #             found = True
+        # if found:
+        #     print("we got it 1")
+        # else:
+        #     print("lmao rip 1")
+        #     breakpoint(context=9)
+        # print(len(self.mobjects))
+        # if len(self.mobjects) == 19:
+        #     breakpoint(context=9)
+
+
         if self.skip_animations:
             self.continual_update(0)
         else:
             self.continual_update(self.frame_duration)
+
+
+
+
+
         self.num_plays += 1
         return self
 
+    def findit(self):
+        found = False
+        where = None
+        for i, mob in enumerate(self.get_mobject_family_members()):
+            if hasattr(mob, 'key'):
+                if mob.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
+                    found = True
+                    where = i
+        if found:
+            print(f"we got it {where}")
+        else:
+            print("lmao rip")
+
     def clean_up_animations(self, *animations):
-        for animation in animations:
+        for i, animation in enumerate(animations):
+            print(i)
+            # if i == 6:
+            #     breakpoint(context=9)
+            self.findit()
             animation.clean_up(self)
         return self
 

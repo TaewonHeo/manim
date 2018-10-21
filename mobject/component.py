@@ -61,6 +61,13 @@ class Component(Mobject):
             dic = OrderedDict()
         labels_dict = self.generate_labels_dict(dic)
         new_mob = self.generate_mobject(dic, labels_dict)
+
+        # this is a hack to apply the updaters on the component to the new
+        # mobject
+        c = self.deepcopy()
+        c.mobject = new_mob
+        c.update(0)
+
         anims = self.update_mobject(new_mob, animate=animate)
         anims.extend(self.update_labels(labels_dict, animate=animate, dic=dic))
         return anims

@@ -223,6 +223,9 @@ class Edge(Component):
         return mob
 
     def update_mobject(self, new_mob, animate=True):
+        """
+        Returns a list of animations of the mobject being updated
+        """
         ret = []
         if animate:
             if type(self.mobject) == Line and type(new_mob) == Arrow:
