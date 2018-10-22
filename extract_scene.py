@@ -75,6 +75,7 @@ def is_child_scene(obj, module):
         return False
     return True
 
+
 def prompt_user_for_choice(name_to_obj):
     num_to_name = {}
     names = sorted(name_to_obj.keys(), key=lambda k: name_to_obj[k].lineno)

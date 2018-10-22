@@ -440,13 +440,6 @@ COLOR_MAP = {
     "TEAL_A": "#54A9FF",    # hsl(210, 67, 100)
 }
 
-for color_name,color_hex in COLOR_MAP.items():
-    if color_name == "WHITE" or color_name == "BLACK":
-        continue
-    c = colour.Color(color_hex)
-    c.set_luminance(c.get_luminance() - 0.08)
-    COLOR_MAP[color_name] = c.hex
-
 PALETTE = list(COLOR_MAP.values())
 locals().update(COLOR_MAP)
 for name in [s for s in list(COLOR_MAP.keys()) if s.endswith("_C")]:

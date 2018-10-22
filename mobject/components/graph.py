@@ -188,6 +188,9 @@ class Graph(Group):
             # if edge.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
             #     print(start, end)
             edge.mobject.put_start_and_end_on(start, end)
-        # add radius change, draw nodes first
         for edge in self.edges.values():
             edge.add_updater(follow_endpoint_updater)
+
+    def remove_edge_updaters(self):
+        for edge in self.edges.values():
+            edge.clear_updaters()

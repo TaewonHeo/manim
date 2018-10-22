@@ -87,13 +87,24 @@ class Scene(Container):
             self.multiplex_sound()
 
     def __getstate__(self):
+        attrs_to_exclude = [
+            "writing_process",
+            "args_to_rename_file",
+            "name",
+            "camera_config",
+            "frame_duration",
+            "skip_animations",
+            "write_to_movie",
+            "save_pngs",
+            "movie_file_extension",
+            "start_at_animation_number",
+            "end_at_animation_number",
+        ]
+
         state = self.__dict__.copy()
-        if "writing_process" in state:
-            del state["writing_process"]
-        if "args_to_rename_file" in state:
-            del state["args_to_rename_file"]
-        if "name" in state:
-            del state["name"]
+        for attr in attrs_to_exclude:
+            if attr in state:
+                del state[attr]
         return state
 
     def setup(self):
@@ -527,19 +538,6 @@ class Scene(Container):
             self.continual_update(self.frame_duration)
         self.num_plays += 1
         return self
-
-    def findit(self):
-        found = False
-        where = None
-        for i, mob in enumerate(self.get_mobject_family_members()):
-            if hasattr(mob, 'key'):
-                if mob.key == ((3.7, 0, 0), (3.7, -3.5, 0)):
-                    found = True
-                    where = i
-        if found:
-            print(f"we got it {where}")
-        else:
-            print("lmao rip")
 
     def clean_up_animations(self, *animations):
         for animation in animations:
