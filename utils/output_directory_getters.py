@@ -2,7 +2,7 @@ import inspect
 import os
 
 import constants
-
+from constants import THIS_DIR
 
 def add_extension_if_not_present(file_name, extension):
     # This could conceivably be smarter about handling existing differing extensions
@@ -21,11 +21,7 @@ def guarantee_existance(path):
 def get_scene_output_directory(scene_class):
     file_path = os.path.abspath(inspect.getfile(scene_class))
 
-    # TODO, is there a better way to do this?
-    parts = file_path.split(os.path.sep)
-    if "manim" in parts:
-        sub_parts = parts[parts.index("manim") + 1:]
-        file_path = os.path.join(*sub_parts)
+    file_path = os.path.relpath(file_path, THIS_DIR)
     file_path = file_path.replace(".pyc", "")
     file_path = file_path.replace(".py", "")
     return guarantee_existance(os.path.join(constants.ANIMATIONS_DIR, file_path))
