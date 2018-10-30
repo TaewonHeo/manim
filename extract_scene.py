@@ -140,7 +140,7 @@ def main():
     )
 
     # config["output_directory"] = os.path.join(
-    #     constants.ANIMATIONS_DIR,
+    #     VIDEO_DIR,
     #     config["file"].replace(".py", "")
     # )
 
