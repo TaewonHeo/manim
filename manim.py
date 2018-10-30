@@ -59,8 +59,7 @@ class Manim():
 
     def __new__(cls):
         kwargs = {
-            "file": "example_file.py",
-            "scene_name": "LiveStream",
+            "scene_name": LIVE_STREAM_NAME,
             "open_video_upon_completion": False,
             "show_file_in_finder": False,
             # By default, write to file
@@ -73,13 +72,13 @@ class Manim():
             "quiet": True,
             "ignore_waits": False,
             "write_all": False,
-            "name": "LiveStream",
+            "name": LIVE_STREAM_NAME,
             "start_at_animation_number": 0,
             "end_at_animation_number": None,
             "skip_animations": False,
             "camera_config": HIGH_QUALITY_CAMERA_CONFIG,
             "frame_duration": PRODUCTION_QUALITY_FRAME_DURATION,
-            "is_live_streaming": True,
+            "is_live_streaming": IS_LIVE_STREAMING
         }
 <<<<<<< HEAD
 >>>>>>> Add is_live_streaming control flow to idle the scene generation pipe for interactive shell usage purpose
