@@ -152,6 +152,21 @@ def get_configuration():
     return config
 
 
+try:
+    env_MEDIA_DIR = os.environ['MEDIA_DIR']
+except KeyError:
+    pass
+if not (env_MEDIA_DIR is None):
+    MEDIA_DIR = env_MEDIA_DIR
+elif os.path.exists("media_dir.txt"):
+    with open("media_dir.txt", 'rU') as media_file:
+        MEDIA_DIR = media_file.readline().strip()
+else:
+    MEDIA_DIR = os.path.join(
+        os.path.expanduser('~'),
+        "Videos/"
+    )
+
 def init_directories(config):
     global SCRIPT_DIR
     global MEDIA_DIR
