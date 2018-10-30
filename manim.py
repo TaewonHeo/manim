@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+<<<<<<< HEAD
 import extract_scene
 extract_scene.main()
 
@@ -48,19 +49,16 @@ extract_scene.main()
 #             "frame_duration": PRODUCTION_QUALITY_FRAME_DURATION,
 #         }
 =======
+=======
+>>>>>>> Return a Scene object from the creation of a Manim instance
 from constants import *
-
 from scene.scene import Scene
-from utils.sounds import play_error_sound
-from utils.sounds import play_finish_sound
-
-from colour import Color
 
 
 class Manim():
 
-    def __init__(self):
-        self.config = {
+    def __new__(cls):
+        kwargs = {
             "file": "example_file.py",
             "scene_name": "LiveStream",
             "open_video_upon_completion": False,
@@ -83,4 +81,8 @@ class Manim():
             "frame_duration": PRODUCTION_QUALITY_FRAME_DURATION,
             "is_live_streaming": True,
         }
+<<<<<<< HEAD
 >>>>>>> Add is_live_streaming control flow to idle the scene generation pipe for interactive shell usage purpose
+=======
+        return Scene(**kwargs)
+>>>>>>> Return a Scene object from the creation of a Manim instance
