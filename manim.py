@@ -78,7 +78,6 @@ class Manim():
             "skip_animations": False,
             "camera_config": HIGH_QUALITY_CAMERA_CONFIG,
             "frame_duration": PRODUCTION_QUALITY_FRAME_DURATION,
-            "is_live_streaming": IS_LIVE_STREAMING
         }
 <<<<<<< HEAD
 >>>>>>> Add is_live_streaming control flow to idle the scene generation pipe for interactive shell usage purpose
