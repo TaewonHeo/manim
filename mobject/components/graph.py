@@ -2,6 +2,7 @@ from collections import OrderedDict
 from mobject.components.edge import Edge
 from mobject.components.node import Node
 from mobject.mobject import Group
+from scipy.spatial import Delaunay, distance_matrix
 from utils.simple_functions import update_without_overwrite
 import constants
 import numpy as np
@@ -194,3 +195,43 @@ class Graph(Group):
     def remove_edge_updaters(self):
         for edge in self.edges.values():
             edge.clear_updaters()
+
+    @staticmethod
+    def from_bounds(
+        bounds,
+        num_points=10,
+        seed=None,
+        min_dist=0.1,
+        euclidean_distances_as_weights=True,
+    ):
+        if seed is not None:
+            np.random.seed(seed)
+        retry = True
+        while retry:
+            points = np.random.rand(num_points, 2)
+            dist_matrix = distance_matrix(points, points)
+            dist_matrix[np.diag_indices(dist_matrix.shape[0])] = np.infty
+            if np.min(dist_matrix) >= min_dist:
+                retry = False
+
+        points[:, 0] *= bounds.get_width()
+        points[:, 1] *= bounds.get_height()
+        points += bounds.get_corner(constants.DOWN + constants.LEFT)[:2]
+
+        tri = Delaunay(points[:, 0:2])
+        (indptr, indices) = tri.vertex_neighbor_vertices
+        nodes = []
+        edges = []
+        for k, u in enumerate(points):
+            u = np.append(u, 0)
+            nodes.append(tuple(u))
+            neighbor_indices = indices[indptr[k]:indptr[k + 1]]
+            for v in points[neighbor_indices]:
+                edge = (tuple(u), tuple(np.append(v, 0)))
+                if edge[::-1] not in edges:
+                    edges.append(edge)
+        return Graph(
+            nodes,
+            edges,
+            euclidean_distances_as_weights=euclidean_distances_as_weights,
+        )

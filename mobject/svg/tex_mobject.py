@@ -141,6 +141,21 @@ class SingleStringTexMobject(SVGMobject):
         self.sort_submobjects(lambda p: p[0])
         return self
 
+    def has_header(self):
+        ret = True
+        lines = self.tex_string.split('\n')
+        if len(lines) == 1:
+            return False
+        min_indent = len(lines[0]) - len(lines[0].strip())
+        for line in lines[1:]:
+            if len(line) == 0:
+                continue
+            indent = len(line) - len(line.strip())
+            if indent == min_indent:
+                ret = False
+                break
+        return ret
+
 
 class TexMobject(SingleStringTexMobject):
     CONFIG = {
@@ -276,6 +291,10 @@ class CodeMobject(TexMobject):
         "propagate_style_to_family": False,
     }
 
+    def __init__(self, *tex_strings, **kwargs):
+        self.active_blocks = []
+        TexMobject.__init__(self, *tex_strings, **kwargs)
+
     def break_up_tex_strings(self, tex_string):
         # only one string should be passed
         assert(len(tex_string) == 1)
@@ -296,10 +315,8 @@ class CodeMobject(TexMobject):
         self.submobjects = mob.submobjects
 
     def organize_by_blocks(self, tex_string, level=0, index=0):
-        #if "relax" in tex_string:
-        #    import ipdb; ipdb.set_trace(context=5)
         # check for header
-        has_header = True
+        header = True
         lines = tex_string.split('\n')
         min_indent = len(lines[0]) - len(lines[0].strip())
         for line in lines[1:]:
@@ -307,12 +324,12 @@ class CodeMobject(TexMobject):
                 continue
             indent = len(line) - len(line.strip())
             if indent == min_indent:
-                has_header = False
+                header = False
                 break
 
         top_mob = SingleStringTexMobject(tex_string, **self.CONFIG)
         top_mob.submobjects = []
-        if has_header:
+        if header:
             head_mob = SingleStringTexMobject(lines[0], **self.CONFIG)
             head_mob.submobjects = self.submobjects[index:index+len(lines[0].replace(" ", ""))]
             index += len(lines[0].replace(" ", ""))
@@ -353,6 +370,22 @@ class CodeMobject(TexMobject):
                 i += j - 1
             i += 1
         return index, top_mob
+
+    def initialize_active_blocks(self, include_header=False):
+        def recurse(block, arr, include_header=True):
+            if block.has_header() and not include_header:
+                arr.append(1)
+            else:
+                arr.append(0)
+            if block.has_header():
+                recurse(block.submobjects[arr[-1]], arr)
+
+        arr = []
+        recurse(self, arr, include_header=include_header)
+        return arr
+
+    def advance_cursor(self):
+        pass
 
 
 class BulletedList(TextMobject):

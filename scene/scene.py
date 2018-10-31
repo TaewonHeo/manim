@@ -17,6 +17,7 @@ from animation.transform import MoveToTarget
 from camera.camera import Camera
 from continual_animation.continual_animation import ContinualAnimation
 from mobject.mobject import Mobject
+from mobject.geometry import Dot
 from utils.iterables import list_update
 from utils.output_directory_getters import add_extension_if_not_present
 from utils.output_directory_getters import get_movie_output_directory
@@ -742,6 +743,14 @@ class Scene(Container):
             shutil.move(*self.args_to_rename_file)
         else:
             os.rename(*self.args_to_rename_file)
+
+    def label(self, point_or_points):
+        if len(point_or_points.shape) == 1:
+            self.add(Dot(point_or_points, color=RED))
+        else:
+            for point in point_or_points:
+                self.add(Dot(point, color=RED))
+
 
 
 class EndSceneEarlyException(Exception):
