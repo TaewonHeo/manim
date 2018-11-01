@@ -7,6 +7,11 @@ import random
 import shutil
 import subprocess as sp
 import warnings
+from time import sleep
+try:
+    import thread  # Low-level threading API (Python 2.7)
+except ImportError:
+    import _thread as thread  # Low-level threading API (Python 3.x)
 
 from tqdm import tqdm as ProgressDisplay
 
@@ -61,6 +66,7 @@ class Scene(Container):
         self.total_run_time = 0
         self.audio_list = []
         self.original_skipping_status = self.skip_animations
+        self.stream_lock = False
         if self.name is None:
             self.name = self.__class__.__name__
         if self.random_seed is not None:
@@ -502,6 +508,8 @@ class Scene(Container):
                 raise EndSceneEarlyException()
 
     def play(self, *args, **kwargs):
+        if IS_LIVE_STREAMING:
+            self.stream_lock = False
         if len(args) == 0:
             warnings.warn("Called Scene.play with no animations")
             return
@@ -540,7 +548,20 @@ class Scene(Container):
         else:
             self.continual_update(self.frame_duration)
         self.num_plays += 1
+
+        if IS_LIVE_STREAMING:
+            self.stream_lock = True
+            thread.start_new_thread(self.idle_stream, ())
+
         return self
+
+    def idle_stream(self):
+        while(self.stream_lock):
+            self.update_frame()
+            n_frames = 1
+            frame = self.get_frame()
+            self.add_frames(*[frame] * n_frames)
+            sleep(self.frame_duration * 999/1000)
 
     def clean_up_animations(self, *animations):
         for animation in animations:
