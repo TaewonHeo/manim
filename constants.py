@@ -164,7 +164,7 @@ elif os.path.exists("media_dir.txt"):
 else:
     MEDIA_DIR = os.path.join(
         os.path.expanduser('~'),
-        "Videos/"
+        "Dropbox (3Blue1Brown)/3Blue1Brown Team Folder"
     )
 
 def init_directories(config):
@@ -461,7 +461,7 @@ for name in [s for s in list(COLOR_MAP.keys()) if s.endswith("_C")]:
     locals()[name.replace("_C", "")] = locals()[name]
 
 # Streaming related configurations
-IS_LIVE_STREAMING = True
+IS_LIVE_STREAMING = False
 LIVE_STREAM_NAME = "LiveStream"
 IS_STREAMING_TO_TWITCH = False
 TWITCH_STREAM_KEY = "YOUR_STREAM_KEY"
