@@ -232,7 +232,7 @@ class Scene(Container):
             return True
         any_time_based_update = any([
             len(m.get_time_based_updaters()) > 0
-            for m in self.get_mobjects()
+            for m in self.get_mobject_family_members()
         ])
         if any_time_based_update:
             return True
