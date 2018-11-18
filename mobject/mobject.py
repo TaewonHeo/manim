@@ -263,6 +263,7 @@ class Mobject(Container):
         Remove all updaters from the Mobject
         """
         self.updaters = []
+        return self
 
     # Transforming operations
 
