@@ -155,8 +155,8 @@ def get_configuration():
 try:
     env_MEDIA_DIR = os.environ['MEDIA_DIR']
 except KeyError:
-    pass
-if not (env_MEDIA_DIR is None):
+    env_MEDIA_DIR = None
+if env_MEDIA_DIR is not None:
     MEDIA_DIR = env_MEDIA_DIR
 elif os.path.exists("media_dir.txt"):
     with open("media_dir.txt", 'rU') as media_file:
