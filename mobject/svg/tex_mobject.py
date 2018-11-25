@@ -6,9 +6,13 @@ from .svg_mobject import VMobjectFromSVGPathstring
 from utils.config_ops import digest_config
 from utils.strings import split_string_list_to_isolate_substrings
 from utils.tex_file_writing import tex_to_svg_file
+from mobject.mobject import Group
 from mobject.geometry import Line
 from mobject.types.vectorized_mobject import VGroup
 from mobject.types.vectorized_mobject import VectorizedPoint
+from animation.transform import ApplyMethod, MoveToTarget
+from animation.creation import Uncreate, ShowCreation
+from animation.indication import Indicate
 
 import operator as op
 from functools import reduce
@@ -146,12 +150,12 @@ class SingleStringTexMobject(SVGMobject):
         lines = self.tex_string.split('\n')
         if len(lines) == 1:
             return False
-        min_indent = len(lines[0]) - len(lines[0].strip())
+        first_line_indent = len(lines[0]) - len(lines[0].strip())
         for line in lines[1:]:
             if len(line) == 0:
                 continue
             indent = len(line) - len(line.strip())
-            if indent == min_indent:
+            if indent == first_line_indent:
                 ret = False
                 break
         return ret
@@ -279,20 +283,24 @@ class TextMobject(TexMobject):
         "alignment": "\\centering",
     }
 
+
 class AlignatTexMobject(TexMobject):
     CONFIG = {
         "template_tex_file": TEMPLATE_ALIGNAT_FILE,
     }
+
 
 class CodeMobject(TexMobject):
     CONFIG = {
         "template_tex_file": TEMPLATE_CODE_FILE,
         "indent_level": 4,
         "propagate_style_to_family": False,
+        "repeat_cursor_dist": 0.15,
     }
 
     def __init__(self, *tex_strings, **kwargs):
-        self.active_blocks = []
+        self.cursor_indices = []
+        self.cursors = []
         TexMobject.__init__(self, *tex_strings, **kwargs)
 
     def break_up_tex_strings(self, tex_string):
@@ -371,21 +379,153 @@ class CodeMobject(TexMobject):
             i += 1
         return index, top_mob
 
-    def initialize_active_blocks(self, include_header=False):
-        def recurse(block, arr, include_header=True):
-            if block.has_header() and not include_header:
-                arr.append(1)
-            else:
-                arr.append(0)
-            if block.has_header():
-                recurse(block.submobjects[arr[-1]], arr)
+    def get_child_idx(self, block):
+        """
+        Returns the index of the first child of block. This skips continued
+        lines.
+        """
+        lines = block.tex_string.split("\n")
+        first_line_indent = len(lines[0]) - len(lines[0].strip())
+        child_idx = 1
+        child_line_indent = len(lines[child_idx]) - len(lines[child_idx].strip())
+        while child_line_indent == first_line_indent + 8:
+            child_idx += 1
+            child_line_indent = len(lines[child_idx]) - len(lines[child_idx].strip())
+        return child_idx
+
+    def recurse(self, block, arr, include_header=True, initialize_depth=-1):
+        """
+        Appends the child indices of block to arr.
+        """
+        if initialize_depth == 0:
+            return
+        child_idx = self.get_child_idx(block)
+        arr.append(child_idx)
+        next_block = block.submobjects[arr[-1]]
+        if next_block.has_header():
+            self.recurse(
+                next_block,
+                arr,
+                initialize_depth=initialize_depth - 1,
+            )
+
+    def initialize_cursor_indices(self, include_header=False):
+        """
+        initialize array of indices denoting blocks with cursors
+        """
 
         arr = []
-        recurse(self, arr, include_header=include_header)
-        return arr
+        self.recurse(self, arr, include_header=include_header)
+        self.cursor_indices = arr
+        return self.cursor_indices
 
-    def advance_cursor(self):
-        pass
+    def place_cursors(self, indices=None, block=None):
+        """
+        place cursors on the blocks denoted by indices if it was passed,
+        otherwise the blocks denoted by self.cursor_indices
+        """
+        if indices is None and len(self.cursor_indices) == 0:
+            raise Exception("no indices to use")
+        elif indices is None:
+            indices = self.cursor_indices
+        if block is None:
+            cur_block = self
+        else:
+            cur_block = block
+        cursors = []
+        for block_idx in indices:
+            cur_block = cur_block.submobjects[block_idx]
+            cursor = TexMobject("\\blacktriangleright")
+            cursor.next_to(cur_block[0], LEFT)
+            cursors.append(cursor)
+        self.cursors.extend(cursors)
+        return [ShowCreation(Group(*cursors))]
+
+    def block_from_indices(self, indices, depth=-1):
+        if depth == -1:
+            depth = len(self.cursors)
+        cur_depth = 0
+        cur_block = self
+        while cur_depth < depth:
+            cur_block = cur_block.submobjects[indices[cur_depth]]
+            cur_depth += 1
+        return cur_block
+
+    def advance_cursor(self, cursor_depth=-1, initialize_depth=-1):
+        """
+        Moves a cursor to the next block of equal level and initializes new
+        cursors on the new block.
+        """
+        if cursor_depth < 0:
+            cursor_depth = len(self.cursor_indices) + cursor_depth
+
+        # find parent block of cursor to advance
+        cur_block = self.block_from_indices(self.cursor_indices, cursor_depth)
+
+        # calculate index of the block to advance to
+        new_index = self.cursor_indices[cursor_depth] + 1
+        if new_index > len(cur_block.submobjects) - 1:
+            if cur_block.has_header():
+                new_index = self.get_child_idx(cur_block)
+            else:
+                new_index = 0
+
+        # remove old cursors and blocks
+        anims = []
+        for cursor in self.cursors[cursor_depth + 1:]:
+            anims.append(Uncreate(cursor))
+        self.cursors = self.cursors[:cursor_depth + 1]
+        self.cursor_indices = self.cursor_indices[:cursor_depth + 1]
+        self.cursor_indices[cursor_depth] = new_index
+
+        # move cursor
+        new_block = cur_block.submobjects[new_index]
+        if new_block.has_header():
+            anims.append(ApplyMethod(
+                self.cursors[cursor_depth].next_to, new_block[0], LEFT))
+        else:
+            anims.append(ApplyMethod(
+                self.cursors[cursor_depth].next_to, new_block[0], LEFT))
+
+        if new_block.has_header():
+            # add new blocks
+            self.recurse(new_block, self.cursor_indices, initialize_depth=initialize_depth)
+
+            # add new cursors
+            anims.extend(self.place_cursors(
+                indices=self.cursor_indices[cursor_depth + 1:],
+                block=new_block,
+            ))
+
+        return anims
+
+    def repeat_cursor_1(self, target_depth=-1):
+        cursor = self.cursors[target_depth]
+        anims = [ApplyMethod(cursor.shift, self.repeat_cursor_dist * LEFT)]
+
+        # remove child cursors
+        anims.append(Uncreate(Group(*self.cursors[target_depth + 1:])))
+        self.cursors = self.cursors[:target_depth + 1]
+        self.cursor_indices = self.cursor_indices[:target_depth + 1]
+
+        return anims
+
+    def repeat_cursor_2(self, target_depth=-1, initialize_depth=-1):
+        cursor = self.cursors[target_depth]
+        anims = [ApplyMethod(cursor.shift, self.repeat_cursor_dist * RIGHT)]
+
+        # add child cursors
+        block = self.block_from_indices(self.cursor_indices)
+        self.recurse(block, self.cursor_indices, initialize_depth=initialize_depth)
+
+        # place cursors at newly added indices
+        anims.extend(self.place_cursors(
+            indices=self.cursor_indices[target_depth + 1:],
+            block=block,
+        ))
+        # anims.append(Indicate(block))
+
+        return anims
 
 
 class BulletedList(TextMobject):

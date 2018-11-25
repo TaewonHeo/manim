@@ -5,7 +5,7 @@ import numpy as np
 from constants import *
 
 from animation.animation import Animation
-from mobject.svg.tex_mobject import TextMobject
+# from mobject.svg.tex_mobject import TextMobject
 from mobject.types.vectorized_mobject import VMobject
 from mobject.types.vectorized_mobject import VectorizedPoint
 from animation.transform import Transform
@@ -95,7 +95,8 @@ class Write(DrawBorderThenFill):
     def __init__(self, mob_or_text, **kwargs):
         digest_config(self, kwargs)
         if isinstance(mob_or_text, str):
-            mobject = TextMobject(mob_or_text)
+            pass
+            # mobject = TextMobject(mob_or_text)
         else:
             mobject = mob_or_text
 

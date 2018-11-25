@@ -13,7 +13,6 @@ from mobject.geometry import RoundedRectangle
 from utils.bezier import is_closed
 from utils.config_ops import digest_config
 from utils.config_ops import digest_locals
-from mobject.svg.tex_mobject import *
 from mobject.types.vectorized_mobject import VGroup
 from mobject.types.vectorized_mobject import VMobject
 
