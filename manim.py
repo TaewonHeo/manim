@@ -1,7 +1,51 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
+import constants
 import extract_scene
-extract_scene.main()
+import subprocess
+import time
+import os
+import sys
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+config = constants.get_configuration()
+
+class Handler(FileSystemEventHandler):
+    def __init__(self, watch_file):
+        self.watch_file = watch_file
+        super(Handler, self).__init__()
+
+    def on_any_event(self, event):
+        if event.event_type == 'modified' and event.src_path == self.watch_file:
+            # Taken any action here when a file is modified.
+            print("Received modified event - %s." % event.src_path)
+            args = sys.argv.copy()
+            args.remove("--watch")
+            subprocess.Popen(args, env=os.environ)
+
+
+if config["stream"]:
+    # livestream()
+    pass
+else:
+    if config["watch"]:
+        print("watching...")
+        watch_file = os.path.abspath(os.getcwd() + os.sep + config["file"])
+        watch_dir = os.path.dirname(watch_file)
+        event_handler = Handler(watch_file)
+        observer = Observer()
+        observer.schedule(event_handler, watch_dir)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+            print("Stopped")
+        observer.join()
+    else:
+        extract_scene.main(config)
 
 # import sys
 # import argparse

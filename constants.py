@@ -34,20 +34,19 @@ def get_configuration():
             "scene_name", nargs="?",
             help="Name of the Scene class you want to see",
         )
-        optional_args = [
-            ("-p", "--preview"),
-            ("-w", "--write_to_movie"),
-            ("-s", "--show_last_frame"),
-            ("-l", "--low_quality"),
-            ("-m", "--medium_quality"),
-            ("-g", "--save_pngs"),
-            ("-f", "--show_file_in_finder"),
-            ("-t", "--transparent"),
-            ("-q", "--quiet"),
-            ("-a", "--write_all")
-        ]
-        for short_arg, long_arg in optional_args:
-            parser.add_argument(short_arg, long_arg, action="store_true")
+        parser.add_argument("-p", "--preview", action="store_true")
+        parser.add_argument("-w", "--write_to_movie", action="store_true")
+        parser.add_argument("-s", "--show_last_frame", action="store_true")
+        parser.add_argument("-l", "--low_quality", action="store_true")
+        parser.add_argument("-m", "--medium_quality", action="store_true")
+        parser.add_argument("-g", "--save_pngs", action="store_true")
+        parser.add_argument("-f", "--show_file_in_finder", action="store_true")
+        parser.add_argument("-t", "--transparent", action="store_true")
+        parser.add_argument("-q", "--quiet", action="store_true")
+        parser.add_argument("-a", "--write_all", action="store_true")
+        parser.add_argument("--stream", action="store_true")
+        parser.add_argument("--watch", action="store_true")
+
         parser.add_argument("-o", "--output_name")
         parser.add_argument("-n", "--start_at_animation_number")
         parser.add_argument("-r", "--resolution")
@@ -94,6 +93,8 @@ def get_configuration():
         "output_dir": output_dir,
         "start_at_animation_number": args.start_at_animation_number,
         "end_at_animation_number": None,
+        "stream": args.stream,
+        "watch": args.watch,
     }
 
     # Camera configuration

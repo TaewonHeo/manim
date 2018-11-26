@@ -1,4 +1,4 @@
-# !/usr/bin/env python2
+# !/usr/bin/env python3
 
 import sys
 # import imp
@@ -46,7 +46,7 @@ def handle_scene(scene, **config):
             commands.append(scene.get_movie_file_path())
         # commands.append("-g")
         FNULL = open(os.devnull, 'w')
-        sp.call(commands, stdout=FNULL, stderr=sp.STDOUT)
+        sp.Popen(commands, stdout=FNULL, stderr=sp.STDOUT)
         FNULL.close()
 
     if config["quiet"]:
@@ -122,8 +122,7 @@ def get_module(file_name):
     return importlib.import_module(module_name)
 
 
-def main():
-    config = constants.get_configuration()
+def main(config):
     constants.init_directories(config)
     script_module = get_module(config["file"])
     pyclbr_module = pyclbr.readmodule(script_module.__name__)
