@@ -6,7 +6,7 @@ import sys
 
 SCRIPT_DIR = ""
 MEDIA_DIR = ""
-ANIMATIONS_DIR = ""
+VIDEO_DIR = ""
 RASTER_IMAGE_DIR = ""
 SVG_IMAGE_DIR = ""
 STAGED_SCENES_DIR = ""
@@ -153,25 +153,10 @@ def get_configuration():
     return config
 
 
-try:
-    env_MEDIA_DIR = os.environ['MEDIA_DIR']
-except KeyError:
-    env_MEDIA_DIR = None
-if env_MEDIA_DIR is not None:
-    MEDIA_DIR = env_MEDIA_DIR
-elif os.path.exists("media_dir.txt"):
-    with open("media_dir.txt", 'rU') as media_file:
-        MEDIA_DIR = media_file.readline().strip()
-else:
-    MEDIA_DIR = os.path.join(
-        os.path.expanduser('~'),
-        "Dropbox (3Blue1Brown)/3Blue1Brown Team Folder"
-    )
-
 def init_directories(config):
     global SCRIPT_DIR
     global MEDIA_DIR
-    global ANIMATIONS_DIR
+    global VIDEO_DIR
     global RASTER_IMAGE_DIR
     global SVG_IMAGE_DIR
     global STAGED_SCENES_DIR
@@ -200,11 +185,11 @@ def init_directories(config):
     with open("media_dir.txt", 'w') as media_file:
         media_file.write(MEDIA_DIR)
     #
-    ANIMATIONS_DIR = os.path.join(MEDIA_DIR, "animations")
+    VIDEO_DIR = os.path.join(MEDIA_DIR, "videos")
     RASTER_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "raster_images")
     SVG_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "svg_images")
     # TODO, staged scenes should really go into a subdirectory of a given scenes directory
-    STAGED_SCENES_DIR = os.path.join(ANIMATIONS_DIR, "staged_scenes")
+    STAGED_SCENES_DIR = os.path.join(VIDEO_DIR, "staged_scenes")
     ###
     FILE_DIR = os.path.join(SCRIPT_DIR, "files")
     TEX_DIR = os.path.join(FILE_DIR, "Tex")
@@ -214,7 +199,7 @@ def init_directories(config):
     MOBJECT_DIR = os.path.join(FILE_DIR, "mobjects")
     IMAGE_MOBJECT_DIR = os.path.join(MOBJECT_DIR, "image")
 
-    for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, ANIMATIONS_DIR, TEX_DIR,
+    for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR, TEX_DIR,
                    TEX_IMAGE_DIR, SAVE_DIR, MOBJECT_DIR, IMAGE_MOBJECT_DIR,
                    STAGED_SCENES_DIR]:
         if not os.path.exists(folder):
@@ -362,13 +347,8 @@ for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR, TEX_DIR,
 TEX_USE_CTEX = False
 TEX_FIX_SVG = False
 TEX_TEXT_TO_REPLACE = "YourTextHere"
-if TEX_USE_CTEX:
-    TEMPLATE_TEX_FILE     = os.path.join(LIB_DIR, "ctex_template.tex")
-else:
-    TEMPLATE_TEX_FILE     = os.path.join(LIB_DIR, "template.tex")
-TEMPLATE_TEXT_FILE    = os.path.join(LIB_DIR, "text_template.tex")
-TEMPLATE_CODE_FILE    = os.path.join(LIB_DIR, "code_template.tex")
-TEMPLATE_ALIGNAT_FILE = os.path.join(LIB_DIR, "alignat_template.tex")
+TEMPLATE_TEX_FILE = os.path.join(THIS_DIR, "tex_template.tex" if not TEX_USE_CTEX
+    else "ctex_template.tex")
 with open(TEMPLATE_TEX_FILE, "r") as infile:
     TEMPLATE_TEXT_FILE_BODY = infile.read()
     TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(
@@ -377,6 +357,16 @@ with open(TEMPLATE_TEX_FILE, "r") as infile:
     )
 
 FFMPEG_BIN = "ffmpeg"
+
+# Streaming related configurations
+IS_LIVE_STREAMING = False
+LIVE_STREAM_NAME = "LiveStream"
+IS_STREAMING_TO_TWITCH = False
+TWITCH_STREAM_KEY = "YOUR_STREAM_KEY"
+STREAMING_PROTOCOL = "tcp"
+STREAMING_IP = "127.0.0.1"
+STREAMING_PORT = "2000"
+STREAMING_CLIENT = "ffplay"
 
 
 # Colors
@@ -456,17 +446,14 @@ COLOR_MAP = {
     "TEAL_A": "#54A9FF",    # hsl(210, 67, 100)
 }
 
+for color_name,color_hex in COLOR_MAP.items():
+    if color_name == "WHITE" or color_name == "BLACK":
+        continue
+    c = colour.Color(color_hex)
+    c.set_luminance(c.get_luminance() - 0.08)
+    COLOR_MAP[color_name] = c.hex
+
 PALETTE = list(COLOR_MAP.values())
 locals().update(COLOR_MAP)
 for name in [s for s in list(COLOR_MAP.keys()) if s.endswith("_C")]:
     locals()[name.replace("_C", "")] = locals()[name]
-
-# Streaming related configurations
-IS_LIVE_STREAMING = False
-LIVE_STREAM_NAME = "LiveStream"
-IS_STREAMING_TO_TWITCH = False
-TWITCH_STREAM_KEY = "YOUR_STREAM_KEY"
-STREAMING_PROTOCOL = "tcp"
-STREAMING_IP = "127.0.0.1"
-STREAMING_PORT = "2000"
-STREAMING_CLIENT = "ffplay"
