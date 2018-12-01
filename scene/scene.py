@@ -34,6 +34,7 @@ from mobject.svg.tex_mobject import TextMobject
 from animation.creation import Write
 import datetime
 
+
 class Scene(Container):
     CONFIG = {
         "camera_class": Camera,

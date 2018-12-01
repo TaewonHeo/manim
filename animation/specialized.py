@@ -104,14 +104,21 @@ class TransformEquation(AnimationGroup):
     def char_size(self, regex, regex_index, subgroup=False):
         if regex[regex_index:regex_index + 2] == '\\\\':
             # handle tex
-            # TODO: use re.search for ' ' or '\\'
-            return regex[regex_index:].find(' ')
+            match = re.search("\W", regex[regex_index + 2:])
+            if match:
+                return 2 + match.start()
+            else:
+                return len(regex[regex_index:])
         elif regex[regex_index] == '\\':
             if subgroup:
                 # handle tex
-                # TODO: use re.search for ' ' or '\\' (or EOL)
-                return regex[regex_index:].find(' ')
+                match = re.search("\W", regex[regex_index + 1:])
+                if match:
+                    return 1 + match.start()
+                else:
+                    return len(regex[regex_index:])
             else:
+                # escaped + or parentheses
                 return 2
         elif regex[regex_index] == '^':
             return 1
@@ -145,7 +152,7 @@ class TransformEquation(AnimationGroup):
                 break
             # open parentheses, some characters that aren't close parentheses,
             # then a close parentheses
-            group_match = re.match("^\([^)]*\)", regex[regex_index:])
+            group_match = re.match("\(.*?(?<!\\\\)\)", regex[regex_index:])
             if group_match:
                 # handle group
                 if mobs:
@@ -166,7 +173,6 @@ class TransformEquation(AnimationGroup):
                 mob_index += num_mobs
                 regex_index += num_chars
         return group
-
 
     def __init__(self, eq1, eq2, regex, regex2=None, map_list=None, align_char=None):
         # align equations
@@ -196,22 +202,20 @@ class TransformEquation(AnimationGroup):
             F2 = Group()
             g1_nodes = set(pair[0] for pair in map_list)
             g2_nodes = set(pair[1] for pair in map_list)
-            if len(g1_nodes) <= len(g2_nodes):
-                map_list.sort(key=lambda x: x[0])
-                i = 0
-                while i < len(map_list):
-                    # import ipdb; ipdb.set_trace(context=5)
-                    l1 = [g1.submobjects[map_list[i][0]]]
-                    l2 = [g2.submobjects[map_list[i][1]]]
-                    i += 1
-                    while i < len(map_list) and map_list[i][0] == map_list[i - 1][0]:
+            while map_list:
+                l1 = [g1.submobjects[map_list[0][0]]]
+                l2 = [g2.submobjects[map_list[0][1]]]
+                new_list = []
+                for i in range(1, len(map_list)):
+                    if map_list[i][0] == map_list[0][0]:
                         l2.append(g2.submobjects[map_list[i][1]])
-                        i += 1
-                    G1.submobjects.append(VGroup(*l1))
-                    G2.submobjects.append(VGroup(*l2))
-            else:
-                print("RIP", file=sys.stderr)
-                assert(False)
+                    elif map_list[i][1] == map_list[0][1]:
+                        l1.append(g1.submobjects[map_list[i][0]])
+                    else:
+                        new_list.append(map_list[i])
+                map_list = new_list
+                G1.submobjects.append(VGroup(*l1))
+                G2.submobjects.append(VGroup(*l2))
             for i in range(len(g1.submobjects)):
                 if i not in g1_nodes:
                     F1.submobjects.append(g1.submobjects[i])

@@ -1,11 +1,10 @@
-
 from constants import *
-
 from .svg_mobject import SVGMobject
 from .svg_mobject import VMobjectFromSVGPathstring
 from utils.config_ops import digest_config
 from utils.strings import split_string_list_to_isolate_substrings
 from utils.tex_file_writing import tex_to_svg_file
+from utils.simple_functions import update_without_overwrite
 from mobject.mobject import Group
 from mobject.geometry import Line
 from mobject.types.vectorized_mobject import VGroup
@@ -13,6 +12,7 @@ from mobject.types.vectorized_mobject import VectorizedPoint
 from animation.transform import ApplyMethod, MoveToTarget
 from animation.creation import Uncreate, ShowCreation
 from animation.indication import Indicate
+import numpy as np
 
 import operator as op
 from functools import reduce
@@ -134,8 +134,8 @@ class SingleStringTexMobject(SVGMobject):
         return TexSymbol(
             path_string,
             color=fill_color,
-            stroke_rgb=np.array([0,0,0]),
-            fill_rgb=np.array([0,0,0]),
+            stroke_rgb=np.array([0, 0, 0]),
+            fill_rgb=np.array([0, 0, 0]),
             fill_opacity=1,
             stroke_width=0,
             propagate_style_to_family=True,
@@ -175,7 +175,8 @@ class TexMobject(SingleStringTexMobject):
         SingleStringTexMobject.__init__(
             self, self.arg_separator.join(tex_strings), **kwargs
         )
-        self.break_up_by_substrings()
+        self.break_up_by_substrings(
+            **update_without_overwrite(kwargs, self.CONFIG))
         self.set_color_by_tex_to_color_map(self.tex_to_color_map)
 
         if self.organize_left_to_right:
@@ -193,7 +194,7 @@ class TexMobject(SingleStringTexMobject):
         split_list = [s for s in split_list if s != '']
         return split_list
 
-    def break_up_by_substrings(self):
+    def break_up_by_substrings(self, **kwargs):
         """
         Reorganize existing submojects one layer
         deeper based on the structure of tex_strings (as a list
@@ -202,7 +203,7 @@ class TexMobject(SingleStringTexMobject):
         new_submobjects = []
         curr_index = 0
         for tex_string in self.tex_strings:
-            sub_tex_mob = SingleStringTexMobject(tex_string, **self.CONFIG)
+            sub_tex_mob = SingleStringTexMobject(tex_string, **kwargs)
             num_submobs = len(sub_tex_mob.submobjects)
             new_index = curr_index + num_submobs
             if num_submobs == 0:

@@ -9,7 +9,8 @@ import sys
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-config = constants.get_configuration()
+config = constants.config
+
 
 class Handler(FileSystemEventHandler):
     def __init__(self, watch_file):

@@ -4,6 +4,9 @@ import colour
 import argparse
 import sys
 
+TEX_FIX_SVG = None
+TEX_USE_CTEX = None
+TEMPLATE_TEX_FILE_BODY = ""
 SCRIPT_DIR = ""
 MEDIA_DIR = ""
 VIDEO_DIR = ""
@@ -22,6 +25,7 @@ TEMPLATE_TEX_FILE = ""
 TEMPLATE_TEXT_FILE = ""
 TEMPLATE_CODE_FILE = ""
 TEMPLATE_ALIGNAT_FILE = ""
+THIS_DIR = ""
 
 
 def get_configuration():
@@ -62,7 +66,8 @@ def get_configuration():
                       output_name_root % expected_ext)
                 output_name = args.output_name
             else:
-                # If anyone wants .mp4.mp4 and is surprised to only get .mp4, or such... Well, too bad.
+                # If anyone wants .mp4.mp4 and is surprised to only get
+                # .mp4, or such... Well, too bad.
                 output_name = output_name_root
         else:
             output_name = args.output_name
@@ -125,7 +130,8 @@ def get_configuration():
 
     if args.color:
         try:
-            config["camera_config"]["background_color"] = colour.Color(args.color)
+            config["camera_config"]["background_color"] = \
+                colour.Color(args.color)
         except AttributeError as err:
             print("Please use a valid color")
             print(err)
@@ -172,6 +178,10 @@ def init_directories(config):
     global TEMPLATE_TEXT_FILE
     global TEMPLATE_CODE_FILE
     global TEMPLATE_ALIGNAT_FILE
+    global TEMPLATE_TEX_FILE_BODY
+    global TEX_FIX_SVG
+    global TEX_USE_CTEX
+    global THIS_DIR
 
     SCRIPT_DIR = config["output_dir"]
     if os.getenv("MEDIA_DIR"):
@@ -188,9 +198,11 @@ def init_directories(config):
     VIDEO_DIR = os.path.join(MEDIA_DIR, "videos")
     RASTER_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "raster_images")
     SVG_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "svg_images")
-    # TODO, staged scenes should really go into a subdirectory of a given scenes directory
+    # TODO, staged scenes should really go into a subdirectory of a given
+    # scenes directory
     STAGED_SCENES_DIR = os.path.join(VIDEO_DIR, "staged_scenes")
-    ###
+    THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+    LIB_DIR = os.path.dirname(os.path.realpath(__file__))
     FILE_DIR = os.path.join(SCRIPT_DIR, "files")
     TEX_DIR = os.path.join(FILE_DIR, "Tex")
     SAVE_DIR = os.path.join(FILE_DIR, "saved_states")
@@ -199,18 +211,27 @@ def init_directories(config):
     MOBJECT_DIR = os.path.join(FILE_DIR, "mobjects")
     IMAGE_MOBJECT_DIR = os.path.join(MOBJECT_DIR, "image")
 
-    for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR, TEX_DIR,
-                   TEX_IMAGE_DIR, SAVE_DIR, MOBJECT_DIR, IMAGE_MOBJECT_DIR,
-                   STAGED_SCENES_DIR]:
+    for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR,
+                   TEX_DIR, TEX_IMAGE_DIR, SAVE_DIR, MOBJECT_DIR,
+                   IMAGE_MOBJECT_DIR, STAGED_SCENES_DIR]:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-    LIB_DIR = os.path.dirname(os.path.realpath(__file__))
+    TEX_USE_CTEX = False
+    TEX_FIX_SVG = False
     TEX_TEXT_TO_REPLACE = "YourTextHere"
-    TEMPLATE_TEX_FILE = os.path.join(LIB_DIR, "template.tex")
     TEMPLATE_TEXT_FILE = os.path.join(LIB_DIR, "text_template.tex")
     TEMPLATE_CODE_FILE = os.path.join(LIB_DIR, "code_template.tex")
     TEMPLATE_ALIGNAT_FILE = os.path.join(LIB_DIR, "alignat_template.tex")
+    TEMPLATE_TEX_FILE = os.path.join(THIS_DIR, "tex_template.tex"
+                                     if not TEX_USE_CTEX
+                                     else "ctex_template.tex")
+    with open(TEMPLATE_TEX_FILE, "r") as infile:
+        TEMPLATE_TEXT_FILE_BODY = infile.read()
+        TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(
+            TEX_TEXT_TO_REPLACE,
+            "\\begin{align*}" + TEX_TEXT_TO_REPLACE + "\\end{align*}",
+        )
 
 
 HELP_MESSAGE = """
@@ -237,7 +258,8 @@ CHOOSE_NUMBER_MESSAGE = """
 Choose number corresponding to desired scene/arguments.
 (Use comma separated list for multiple entries, or start-end or a range)
 Choice(s): """
-INVALID_NUMBER_MESSAGE = "Fine then, if you don't want to give a valid number I'll just quit"
+INVALID_NUMBER_MESSAGE = "Fine then, if you don't want to give a valid "
+"number I'll just quit"
 
 NO_SCENE_MESSAGE = """
    There are no scenes inside that module
@@ -323,38 +345,40 @@ PI = np.pi
 TAU = 2 * PI
 DEGREES = TAU / 360
 
-VIDEO_DIR = os.path.join(MEDIA_DIR, "videos")
-RASTER_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "raster_images")
-SVG_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "svg_images")
-# TODO, staged scenes should really go into a subdirectory of a given scenes directory
-STAGED_SCENES_DIR = os.path.join(VIDEO_DIR, "staged_scenes")
-###
-THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-FILE_DIR = os.path.join(THIS_DIR, "files")
-TEX_DIR = os.path.join(FILE_DIR, "Tex")
-TEX_IMAGE_DIR = TEX_DIR  # TODO, What is this doing?
-# These two may be depricated now.
-MOBJECT_DIR = os.path.join(FILE_DIR, "mobjects")
-IMAGE_MOBJECT_DIR = os.path.join(MOBJECT_DIR, "image")
-AUDIO_DIR = os.path.join(FILE_DIR, "audio")
+# VIDEO_DIR = os.path.join(MEDIA_DIR, "videos")
+# RASTER_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "raster_images")
+# SVG_IMAGE_DIR = os.path.join(MEDIA_DIR, "designs", "svg_images")
+# # TODO, staged scenes should really go into a subdirectory of a
+# given scenes directory
+# STAGED_SCENES_DIR = os.path.join(VIDEO_DIR, "staged_scenes")
+# ###
+# THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+# FILE_DIR = os.path.join(THIS_DIR, "files")
+# TEX_DIR = os.path.join(FILE_DIR, "Tex")
+# TEX_IMAGE_DIR = TEX_DIR  # TODO, What is this doing?
+# # These two may be depricated now.
+# MOBJECT_DIR = os.path.join(FILE_DIR, "mobjects")
+# IMAGE_MOBJECT_DIR = os.path.join(MOBJECT_DIR, "image")
+# AUDIO_DIR = os.path.join(FILE_DIR, "audio")
+#
+# for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR, TEX_DIR,
+#                TEX_IMAGE_DIR, MOBJECT_DIR, IMAGE_MOBJECT_DIR,
+#                STAGED_SCENES_DIR]:
+#     if not os.path.exists(folder):
+#         os.makedirs(folder)
 
-for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR, TEX_DIR,
-               TEX_IMAGE_DIR, MOBJECT_DIR, IMAGE_MOBJECT_DIR,
-               STAGED_SCENES_DIR]:
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-TEX_USE_CTEX = False
-TEX_FIX_SVG = False
-TEX_TEXT_TO_REPLACE = "YourTextHere"
-TEMPLATE_TEX_FILE = os.path.join(THIS_DIR, "tex_template.tex" if not TEX_USE_CTEX
-    else "ctex_template.tex")
-with open(TEMPLATE_TEX_FILE, "r") as infile:
-    TEMPLATE_TEXT_FILE_BODY = infile.read()
-    TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(
-        TEX_TEXT_TO_REPLACE,
-        "\\begin{align*}" + TEX_TEXT_TO_REPLACE + "\\end{align*}",
-    )
+# TEX_USE_CTEX = False
+# TEX_FIX_SVG = False
+# TEX_TEXT_TO_REPLACE = "YourTextHere"
+# TEMPLATE_TEX_FILE = os.path.join(THIS_DIR, "tex_template.tex"
+# if not TEX_USE_CTEX
+#     else "ctex_template.tex")
+# with open(TEMPLATE_TEX_FILE, "r") as infile:
+#     TEMPLATE_TEXT_FILE_BODY = infile.read()
+#     TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(
+#         TEX_TEXT_TO_REPLACE,
+#         "\\begin{align*}" + TEX_TEXT_TO_REPLACE + "\\end{align*}",
+#     )
 
 FFMPEG_BIN = "ffmpeg"
 
@@ -375,16 +399,11 @@ COLOR_MAP = {
     "DARK_BLUE": "#236B8E",
     "DARK_BROWN": "#8B4513",
     "LIGHT_BROWN": "#CD853F",
-    "BLUE_A" : "#1C758A",
-    "BLUE_B" : "#29ABCA",
-    "BLUE_C" : "#58C4DD",
-    "BLUE_D" : "#9CDCEB",
-    "BLUE_E" : "#C7E9F1",
-    "TEAL_E": "#49A88F",
-    "TEAL_D": "#55C1A7",
-    "TEAL_C": "#5CD0B3",
-    "TEAL_B": "#76DDC0",
-    "TEAL_A": "#ACEAD7",
+    "BLUE_A": "#1C758A",
+    "BLUE_B": "#29ABCA",
+    "BLUE_C": "#58C4DD",
+    "BLUE_D": "#9CDCEB",
+    "BLUE_E": "#C7E9F1",
     "GREEN_E": "#699C52",
     "GREEN_D": "#77B05D",
     "GREEN_C": "#83C167",
@@ -410,11 +429,11 @@ COLOR_MAP = {
     "MAROON_C": "#C55F73",
     "MAROON_B": "#EC92AB",
     "MAROON_A": "#ECABC1",
-    "PURPLE_A" : "#644172",
-    "PURPLE_B" : "#715582",
-    "PURPLE_C" : "#9A72AC",
-    "PURPLE_D" : "#B189C6",
-    "PURPLE_E" : "#CAA3E8",
+    "PURPLE_A": "#644172",
+    "PURPLE_B": "#715582",
+    "PURPLE_C": "#9A72AC",
+    "PURPLE_D": "#B189C6",
+    "PURPLE_E": "#CAA3E8",
     "WHITE": "#FFFFFF",
     "BLACK": "#000000",
     "LIGHT_GRAY": "#BBBBBB",
@@ -426,27 +445,26 @@ COLOR_MAP = {
     "GREY_BROWN": "#736357",
     "PINK": "#D147BD",
     "GREEN_SCREEN": "#00FF00",
-    "ORANGE": "#FF862F",
 
-    "ORANGE": "#FF7054",    # hsl(10, 67, 60)
-    "MAGENTA_E": "#993265", # hsl(330, 67, 60)
-    "MAGENTA_D": "#B23A76", # hsl(330, 67, 70)
-    "MAGENTA_C": "#CC4387", # hsl(330, 67, 80)
-    "MAGENTA_B": "#E54B98", # hsl(330, 67, 90)
-    "MAGENTA_A": "#FF54A9", # hsl(330, 67, 100)
-    "VIOLET_E": "#663399",  # hsl(270, 67, 60)
-    "VIOLET_D": "#773BB2",  # hsl(270, 67, 70)
-    "VIOLET_C": "#8844CC",  # hsl(270, 67, 80)
-    "VIOLET_B": "#994CE5",  # hsl(270, 67, 90)
-    "VIOLET_A": "#AA55FF",  # hsl(270, 67, 100)
-    "TEAL_E": "#326599",    # hsl(210, 67, 60)
-    "TEAL_D": "#3A76B2",    # hsl(210, 67, 70)
-    "TEAL_C": "#4387CC",    # hsl(210, 67, 80)
-    "TEAL_B": "#4B98E5",    # hsl(210, 67, 90)
-    "TEAL_A": "#54A9FF",    # hsl(210, 67, 100)
+    "ORANGE": "#FF7054",     # hsl(10, 67, 60)
+    "MAGENTA_E": "#993265",  # hsl(330, 67, 60)
+    "MAGENTA_D": "#B23A76",  # hsl(330, 67, 70)
+    "MAGENTA_C": "#CC4387",  # hsl(330, 67, 80)
+    "MAGENTA_B": "#E54B98",  # hsl(330, 67, 90)
+    "MAGENTA_A": "#FF54A9",  # hsl(330, 67, 100)
+    "VIOLET_E": "#663399",   # hsl(270, 67, 60)
+    "VIOLET_D": "#773BB2",   # hsl(270, 67, 70)
+    "VIOLET_C": "#8844CC",   # hsl(270, 67, 80)
+    "VIOLET_B": "#994CE5",   # hsl(270, 67, 90)
+    "VIOLET_A": "#AA55FF",   # hsl(270, 67, 100)
+    "TEAL_E": "#326599",     # hsl(210, 67, 60)
+    "TEAL_D": "#3A76B2",     # hsl(210, 67, 70)
+    "TEAL_C": "#4387CC",     # hsl(210, 67, 80)
+    "TEAL_B": "#4B98E5",     # hsl(210, 67, 90)
+    "TEAL_A": "#54A9FF",     # hsl(210, 67, 100)
 }
 
-for color_name,color_hex in COLOR_MAP.items():
+for color_name, color_hex in COLOR_MAP.items():
     if color_name == "WHITE" or color_name == "BLACK":
         continue
     c = colour.Color(color_hex)
@@ -457,3 +475,6 @@ PALETTE = list(COLOR_MAP.values())
 locals().update(COLOR_MAP)
 for name in [s for s in list(COLOR_MAP.keys()) if s.endswith("_C")]:
     locals()[name.replace("_C", "")] = locals()[name]
+
+config = get_configuration()
+init_directories(config)
