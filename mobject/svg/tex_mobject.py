@@ -160,6 +160,19 @@ class SingleStringTexMobject(SVGMobject):
                 break
         return ret
 
+    def flatten(self):
+        if type(self.submobjects[0]).__name__ == "TexSymbol":
+            return [self]
+        elif type(self.submobjects[0]).__name__ == "SingleStringTexMobject":
+            result = []
+            for mob in self.submobjects:
+                result.extend(mob.flatten())
+            return result
+        else:
+            raise Exception("malformed SingleStringTexMobject")
+            breakpoint(context=9)
+
+
 
 class TexMobject(SingleStringTexMobject):
     CONFIG = {
@@ -319,7 +332,7 @@ class CodeMobject(TexMobject):
     def modify_special_strings(self, tex):
         return tex
 
-    def break_up_by_substrings(self):
+    def break_up_by_substrings(self, **kwargs):
         index, mob = self.organize_by_blocks(self.tex_string)
         self.submobjects = mob.submobjects
 
