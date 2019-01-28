@@ -20,7 +20,7 @@ primes.py
 
 *.mnm
 *.sw*
-media/
+
 notes.txt
 log.txt
 tags
